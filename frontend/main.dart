@@ -16,30 +16,26 @@ class ArkoApp extends StatelessWidget {
       title: 'Arkō Architecture',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        useMaterial3: true,
         primarySwatch: Colors.blueGrey,
+        useMaterial3: true, // Garante um visual moderno
       ),
+      // O segredo está aqui: o FutureBuilder decide a tela inicial
       home: FutureBuilder<String?>(
         future: AuthService.getToken(),
         builder: (context, snapshot) {
-          // DEBUG: Vamos ver no console o que está chegando
-          if (snapshot.connectionState == ConnectionState.done) {
-            print("Tentativa de leitura de token terminada.");
-            print("Valor do token recuperado: ${snapshot.data}");
-          }
-
+          // Enquanto o Flutter lê o token do storage, mostramos um carregamento
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
+              body: Center(child: CircularProgressIndicator(color: Colors.black)),
             );
           }
 
-          // Se snapshot.data tiver QUALQUER texto, ele deve entrar
-          if (snapshot.hasData && snapshot.data != null && snapshot.data!.isNotEmpty) {
+          // Se houver um token, pulamos direto para a Dashboard
+          if (snapshot.hasData && snapshot.data != null) {
             return const DashboardView();
           }
 
-          // Se cair aqui, é porque snapshot.data veio nulo ou vazio
+          // Se não houver token, o usuário precisa logar
           return const LoginView();
         },
       ),

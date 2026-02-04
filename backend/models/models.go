@@ -2,13 +2,18 @@ package models
 
 import (
 	"gorm.io/gorm"
+	"time"
 )
 
 // User: Para a área administrativa
 type User struct {
-	gorm.Model        // Isso injeta ID, CreatedAt, UpdatedAt, DeletedAt automaticamente
-	Username string `gorm:"unique;not null" json:"username"`
-	Password string `gorm:"not null" json:"-"`
+    // Definimos o ID manualmente para controlar a tag JSON
+    ID        uint           `gorm:"primaryKey" json:"id"` 
+    Username  string         `gorm:"unique" json:"username"`
+    Password  string         `json:"-"` // A senha nunca sai para o front
+    CreatedAt time.Time      `json:"created_at"`
+    UpdatedAt time.Time      `json:"updated_at"`
+    DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 // Project: Os projetos arquitetônicos da Arkō

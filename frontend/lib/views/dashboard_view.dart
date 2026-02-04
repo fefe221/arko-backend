@@ -1,20 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/services/auth_service.dart';
 import 'package:frontend/views/login_view.dart';
+import 'package:frontend/views/users_management_view.dart'; // Importamos a tela de usuários
 
-class DashboardView extends StatelessWidget {
+class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
 
-  // Função para deslogar
-  void _handleLogout(BuildContext context) async {
-    await AuthService.logout(); // Limpa o token do storage
-    if (!context.mounted) return;
-    
-    // Volta para a tela de login removendo todas as rotas anteriores
-    Navigator.pushAndRemoveUntil(
+  @override
+  State<DashboardView> createState() => _DashboardViewState();
+}
+
+class _DashboardViewState extends State<DashboardView> {
+  // 1. Variável de Estado: Controla qual índice do menu está ativo
+  int _selectedIndex = 0;
+
+  // 2. Lista de Telas: Aqui definimos o que aparece no centro da dashboard
+  // Cada índice aqui corresponde a um botão no menu lateral
+  final List<Widget> _pages = [
+    const Center(child: Text("Bem-vindo ao Início", style: TextStyle(fontSize: 24))),
+    const Center(child: Text("Módulo de Projetos - Em breve", style: TextStyle(fontSize: 24))),
+    const UsersManagementView(), // <-- A tela que criamos no passo anterior
+    const Center(child: Text("Módulo de Leads - Em breve", style: TextStyle(fontSize: 24))),
+  ];
+
+  // 3. Função de Logout (Lógica Sênior de limpeza)
+  void _handleLogout() async {
+    await AuthService.logout();
+    if (!mounted) return;
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const LoginView()),
-      (route) => false,
     );
   }
 
@@ -23,91 +38,59 @@ class DashboardView extends StatelessWidget {
     return Scaffold(
       body: Row(
         children: [
-          // 1. Menu Lateral (Sidebar)
-          Container(
-            width: 250,
-            color: Colors.black87,
-            child: Column(
-              children: [
-                const DrawerHeader(
-                  child: Center(
-                    child: Text(
-                      "ARKŌ",
-                      style: TextStyle(color: Colors.white, fontSize: 24, letterSpacing: 8),
-                    ),
+          // MENU LATERAL (Sidebar)
+          NavigationRail(
+            backgroundColor: Colors.black87,
+            unselectedIconTheme: const IconThemeData(color: Colors.white60),
+            selectedIconTheme: const IconThemeData(color: Colors.white),
+            unselectedLabelTextStyle: const TextStyle(color: Colors.white60),
+            selectedLabelTextStyle: const TextStyle(color: Colors.white),
+            
+            // Define se o menu mostra ícone ou texto
+            labelType: NavigationRailLabelType.all,
+            
+            // 4. Integração do Estado: Qual item está marcado como ativo?
+            selectedIndex: _selectedIndex,
+            
+            // 5. Mudança de Estado: O que acontece ao clicar?
+            onDestinationSelected: (int index) {
+              setState(() {
+                _selectedIndex = index; // O Flutter redesenha a tela com o novo índice
+              });
+            },
+            
+            destinations: const [
+              NavigationRailDestination(icon: Icon(Icons.home), label: Text('Início')),
+              NavigationRailDestination(icon: Icon(Icons.architecture), label: Text('Projetos')),
+              NavigationRailDestination(icon: Icon(Icons.people), label: Text('Equipe')), // Index 2
+              NavigationRailDestination(icon: Icon(Icons.contact_mail), label: Text('Leads')),
+            ],
+            
+            // Botão de Sair posicionado ao final do menu
+            trailing: Expanded(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 20.0),
+                  child: IconButton(
+                    icon: const Icon(Icons.logout, color: Colors.white60),
+                    onPressed: _handleLogout,
                   ),
                 ),
-                _buildMenuItem(Icons.dashboard, "Início", () {}),
-                _buildMenuItem(Icons.architecture, "Projetos", () {}),
-                _buildMenuItem(Icons.contact_mail, "Leads (Contatos)", () {}),
-                const Spacer(), // Empurra o logout para o final
-                _buildMenuItem(Icons.logout, "Sair", () => _handleLogout(context)),
-                const SizedBox(height: 20),
-              ],
-            ),
-          ),
-
-          // 2. Área de Conteúdo Principal
-          Expanded(
-            child: Container(
-              color: const Color(0xFFFF0F0), // Fundo levemente cinza
-              padding: const EdgeInsets.all(40),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Painel de Controle",
-                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text("Gerencie os projetos e leads da Arkō Architecture."),
-                  const SizedBox(height: 40),
-                  
-                  // Cards de resumo (Simulados por enquanto)
-                  Row(
-                    children: [
-                      _buildStatCard("Leads Hoje", "04", Colors.blueAccent),
-                      const SizedBox(width: 20),
-                      _buildStatCard("Projetos", "12", Colors.black87),
-                    ],
-                  ),
-                ],
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
 
-  // Widget auxiliar para itens do menu
-  Widget _buildMenuItem(IconData icon, String label, VoidCallback onTap) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.white70),
-      title: Text(label, style: const TextStyle(color: Colors.white70)),
-      onTap: onTap,
-      hoverColor: Colors.white10,
-    );
-  }
-
-  // Widget auxiliar para os cards de estatística
-  Widget _buildStatCard(String title, String value, Color color) {
-    return Container(
-      width: 200,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 8),
-          Text(value, style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: color)),
+          // CONTEÚDO PRINCIPAL (Dinâmico)
+          Expanded(
+            child: Container(
+              color: const Color(0xFFF5F5F5),
+              padding: const EdgeInsets.all(32),
+              // 6. O segredo da troca de telas:
+              // Ele exibe o Widget que estiver na posição _selectedIndex da lista _pages
+              child: _pages[_selectedIndex],
+            ),
+          ),
         ],
       ),
     );
