@@ -36,6 +36,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   dio: ^5.9.1
   shared_preferences: ^2.5.4
+  # ... dio já deve estar aqui
+  image_picker: ^1.0.7  # Para abrir a galeria do Windows/Web/Mobile
+  http_parser: ^4.0.0   # Necessário para definir o tipo de arquivo no envio (Multipart)
 
 dev_dependencies:
   flutter_test:

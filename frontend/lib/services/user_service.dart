@@ -24,13 +24,15 @@ class UserService {
       throw Exception("Falha ao criar colaborador");
     }
   }
-  // Deleta um colaborador passando o ID
-  Future<void> deleteUser(int id) async {
-    try {
-      // Passamos o ID na URL, conforme configurado no Go
-      await _api.dio.delete('/admin/users/$id');
-    } catch (e) {
-      throw Exception("Erro ao excluir colaborador");
-  }
+  
+
+
+
+Future<void> deleteUser(dynamic id) async {
+  final String idStr = id.toString();
+  await _api.dio.delete('/admin/users/$idStr');
 }
+
+
+
 }

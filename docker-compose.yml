@@ -1,5 +1,5 @@
 services:
-  # O Banco de Dados que o Django normalmente configuraria para você
+  # Banco de Dados
   db:
     image: postgres:15-alpine
     container_name: arko_db
@@ -13,14 +13,17 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  # O Backend em Go (vamos construir a imagem depois)
+  # Backend em Go
   backend:
     build: ./backend
     container_name: arko_api
+    restart: always
     ports:
       - "8080:8080"
     volumes:
       - ./backend:/app
+      # Garantimos que a pasta de uploads no container seja a mesma da sua máquina
+      - ./backend/uploads:/app/uploads 
     depends_on:
       - db
     environment:
