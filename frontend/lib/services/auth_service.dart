@@ -10,7 +10,6 @@ class AuthService {
   // Recupera o token quando o app abre
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.reload();
     return prefs.getString('jwt_token');
   }
 

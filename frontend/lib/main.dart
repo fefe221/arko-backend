@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/services/auth_service.dart';
-import 'package:frontend/views/login_view.dart';
 import 'package:frontend/views/dashboard_view.dart';
+import 'package:frontend/views/login_view.dart';
+import 'package:frontend/views/public/ambientes_view.dart';
+import 'package:frontend/views/public/campanhas_view.dart';
+import 'package:frontend/views/public/home_view.dart';
+import 'package:frontend/views/public/institutional_view.dart';
+import 'package:frontend/views/public/onde_encontrar_view.dart';
 
 void main() {
   runApp(const ArkoApp());
@@ -10,6 +15,10 @@ void main() {
 class ArkoApp extends StatelessWidget {
   const ArkoApp({super.key});
 
+  static const _bgColor = Color(0xFFE8E6DE);
+  static const _textPrimary = Color(0xFF686868);
+  static const _textSecondary = Color(0xFF8A8A8A);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -17,32 +26,84 @@ class ArkoApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        primarySwatch: Colors.blueGrey,
+        fontFamily: 'Birken Nue',
+        scaffoldBackgroundColor: _bgColor,
+        colorScheme: const ColorScheme.light(
+          primary: _textPrimary,
+          onPrimary: _bgColor,
+          surface: _bgColor,
+          onSurface: _textPrimary,
+        ),
+        textTheme: const TextTheme(
+          headlineSmall: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.6,
+            color: _textPrimary,
+          ),
+          titleLarge: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.48,
+            color: _textPrimary,
+          ),
+          bodyMedium: TextStyle(
+            fontSize: 16,
+            color: _textSecondary,
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.white,
+            foregroundColor: _textPrimary,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: _textPrimary, width: 1),
+            ),
+          ),
+        ),
       ),
-      home: FutureBuilder<String?>(
-        future: AuthService.getToken(),
-        builder: (context, snapshot) {
-          // DEBUG: Vamos ver no console o que está chegando
-          if (snapshot.connectionState == ConnectionState.done) {
-            print("Tentativa de leitura de token terminada.");
-            print("Valor do token recuperado: ${snapshot.data}");
-          }
+      initialRoute: '/',
+      routes: {
+        '/': (_) => const HomeView(),
+        '/institucional': (_) => const InstitutionalView(),
+        '/ambientes': (_) => const AmbientesView(),
+        '/campanhas': (_) => const CampanhasView(),
+        '/onde_encontrar': (_) => const OndeEncontrarView(),
+        '/login': (_) => const LoginView(),
+        '/admin': (_) => const _AdminGate(),
+      },
+    );
+  }
+}
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
+class _AdminGate extends StatelessWidget {
+  const _AdminGate();
 
-          // Se snapshot.data tiver QUALQUER texto, ele deve entrar
-          if (snapshot.hasData && snapshot.data != null && snapshot.data!.isNotEmpty) {
-            return const DashboardView();
-          }
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String?>(
+      future: AuthService.getToken(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-          // Se cair aqui, é porque snapshot.data veio nulo ou vazio
-          return const LoginView();
-        },
-      ),
+        if (snapshot.hasData && snapshot.data != null && snapshot.data!.isNotEmpty) {
+          return const DashboardView();
+        }
+
+        return const LoginView();
+      },
     );
   }
 }

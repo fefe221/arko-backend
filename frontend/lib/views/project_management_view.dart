@@ -20,6 +20,16 @@ class _ProjectsManagementViewState extends State<ProjectsManagementView> {
   final _catController = TextEditingController();
   List<XFile> _selectedImages = [];
   static const String _baseUrl = 'http://localhost:8080';
+  static const List<String> _categories = [
+    "Cozinha",
+    "Dormitório",
+    "Ambientes Integrados",
+    "Office e Corporativo",
+    "Living",
+    "Closet",
+    "Salas de Banho",
+  ];
+  String? _selectedCategory;
 
   @override
   void initState() {
@@ -47,6 +57,7 @@ class _ProjectsManagementViewState extends State<ProjectsManagementView> {
   void _showAddModal(BuildContext context) {
     showDialog(
       context: context,
+      useRootNavigator: true,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => AlertDialog(
           title: const Text("Novo Projeto"),
@@ -68,9 +79,21 @@ class _ProjectsManagementViewState extends State<ProjectsManagementView> {
                     controller: _locController,
                     decoration: const InputDecoration(labelText: "Localização (Cidade/UF)"),
                   ),
-                  TextField(
-                    controller: _catController,
+                  DropdownButtonFormField<String>(
+                    value: _selectedCategory,
                     decoration: const InputDecoration(labelText: "Categoria"),
+                    items: _categories
+                        .map((cat) => DropdownMenuItem(
+                              value: cat,
+                              child: Text(cat),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      setModalState(() {
+                        _selectedCategory = value;
+                        _catController.text = value ?? "";
+                      });
+                    },
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton.icon(
@@ -96,13 +119,18 @@ class _ProjectsManagementViewState extends State<ProjectsManagementView> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
               onPressed: () async {
-                if (_titleController.text.isEmpty) return;
+                if (_titleController.text.isEmpty || _selectedCategory == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Preencha título e categoria")),
+                  );
+                  return;
+                }
                 try {
                   await _service.createProject(
                     title: _titleController.text,
                     description: _descController.text,
                     location: _locController.text,
-                    category: _catController.text,
+                    category: _selectedCategory ?? "",
                     images: _selectedImages,
                   );
                   
@@ -111,6 +139,7 @@ class _ProjectsManagementViewState extends State<ProjectsManagementView> {
                   _descController.clear();
                   _locController.clear();
                   _catController.clear();
+                  _selectedCategory = null;
                   _selectedImages = [];
                   
                   if (context.mounted) Navigator.pop(context);
@@ -239,6 +268,15 @@ class _ProjectsManagementViewState extends State<ProjectsManagementView> {
                                     width: 56,
                                     height: 56,
                                     fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        width: 56,
+                                        height: 56,
+                                        color: Colors.grey[200],
+                                        alignment: Alignment.center,
+                                        child: const Icon(Icons.photo, color: Colors.grey),
+                                      );
+                                    },
                                   ),
                           ),
                           title: Text(

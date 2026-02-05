@@ -14,6 +14,15 @@ class ProjectService {
     } catch (e) { return []; }
   }
 
+  Future<List<dynamic>> getPublicProjects() async {
+    try {
+      final response = await _api.dio.get('/projects');
+      return response.data;
+    } catch (e) {
+      return [];
+    }
+  }
+
 
 
   Future<void> createProject({

@@ -110,6 +110,13 @@ func main() {
 		c.JSON(200, gin.H{"token": tokenString})
 	})
 
+	// Rota pública para listar projetos (sem autenticação)
+	r.GET("/projects", func(c *gin.Context) {
+		var projects []models.Project
+		DB.Preload("Images").Find(&projects)
+		c.JSON(200, projects)
+	})
+
 	admin := r.Group("/admin")
 	admin.Use(AuthMiddleware())
 	{
