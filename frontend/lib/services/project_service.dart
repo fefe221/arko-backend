@@ -52,7 +52,6 @@ class ProjectService {
 
     await _api.dio.post('/admin/projects', data: formData);
   }
-  
   // Mude de 'int id' para 'dynamic id'
   Future<void> deleteProject(dynamic id) async {
     try {

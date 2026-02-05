@@ -55,8 +55,9 @@ class _ProjectsManagementViewState extends State<ProjectsManagementView> {
   }
 
   void _showAddModal(BuildContext context) {
+    final rootContext = Navigator.of(context, rootNavigator: true).context;
     showDialog(
-      context: context,
+      context: rootContext,
       useRootNavigator: true,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => AlertDialog(

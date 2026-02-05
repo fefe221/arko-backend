@@ -5,10 +5,12 @@ class PublicScaffold extends StatefulWidget {
     super.key,
     required this.body,
     this.showDivider = false,
+    this.background,
   });
 
   final Widget body;
   final bool showDivider;
+  final Widget? background;
 
   @override
   State<PublicScaffold> createState() => _PublicScaffoldState();
@@ -50,43 +52,67 @@ class _PublicScaffoldState extends State<PublicScaffold> {
     return Scaffold(
       body: Stack(
         children: [
+          if (widget.background != null)
+            Positioned.fill(child: widget.background!),
           Column(
             children: [
               SafeArea(
                 bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.menu, color: _textPrimary),
-                        onPressed: _toggleMenu,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isMobile = constraints.maxWidth < 900;
+                    final horizontal = isMobile ? 20.0 : 150.0;
+                    final logoHeight = isMobile ? 62.0 : 120.0;
+                    final bottomPadding = isMobile ? 20.0 : 24.0;
+                    final topPadding = isMobile ? 60.0 : 90.0;
+                    return Padding(
+                      padding: EdgeInsets.fromLTRB(horizontal, topPadding, horizontal, bottomPadding),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.menu, color: _textPrimary),
+                            iconSize: 30,
+                            onPressed: _toggleMenu,
+                          ),
+                          const Spacer(),
+                          InkWell(
+                            onTap: () => _navigateTo("/"),
+                            child: SizedBox(
+                              height: logoHeight,
+                              child: Image.asset(
+                                'assets/images/logo.png',
+                                height: logoHeight,
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            tooltip: "Área administrativa",
+                            onPressed: () => _navigateTo("/login"),
+                            icon:
+                                const Icon(Icons.lock_outline, color: _textPrimary),
+                            iconSize: 28,
+                          ),
+                        ],
                       ),
-                      const Spacer(),
-                      const Text(
-                        "AR\nKŌ",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          height: 1,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.5,
-                          color: _textPrimary,
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        tooltip: "Área administrativa",
-                        onPressed: () => _navigateTo("/login"),
-                        icon: const Icon(Icons.lock_outline, color: _textPrimary),
-                      ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
               if (widget.showDivider) const Divider(height: 1),
               Expanded(
-                child: widget.body,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isMobile = constraints.maxWidth < 900;
+                    final horizontal = isMobile ? 20.0 : 150.0;
+                    final top = isMobile ? 60.0 : 80.0;
+                    return Padding(
+                      padding: EdgeInsets.fromLTRB(horizontal, top, horizontal, 24),
+                      child: widget.body,
+                    );
+                  },
+                ),
               ),
             ],
           ),

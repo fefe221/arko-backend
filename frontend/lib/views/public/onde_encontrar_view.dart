@@ -8,7 +8,6 @@ class OndeEncontrarView extends StatelessWidget {
   Widget build(BuildContext context) {
     return PublicScaffold(
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         children: [
           Text(
             "Onde encontrar",

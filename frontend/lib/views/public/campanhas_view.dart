@@ -8,7 +8,6 @@ class CampanhasView extends StatelessWidget {
   Widget build(BuildContext context) {
     return PublicScaffold(
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         children: [
           Container(
             height: 320,
