@@ -70,35 +70,33 @@ class _AmbientesViewState extends State<AmbientesView>
     ];
 
     return PublicScaffold(
-      background: Positioned.fill(
-        child: AnimatedSwitcher(
-          duration: _switchDuration,
-          switchInCurve: Curves.easeInOut,
-          switchOutCurve: Curves.easeInOut,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final isMobile = constraints.maxWidth < 900;
-              final offImage = isMobile
-                  ? 'assets/images/background_ambiente_mobile/background_ambiente01.png'
-                  : 'assets/images/background_ambiente_web/background_ambiente01.png';
-              final onImage = isMobile
-                  ? 'assets/images/background_ambiente_mobile/background_ambiente02.png'
-                  : 'assets/images/background_ambiente_web/background_ambiente02.png';
-              return _isLit
-                  ? _LightImage(
-                      key: ValueKey('lit-$isMobile'),
-                      imagePath: onImage,
-                      flash: _flashController,
-                    )
-                  : SizedBox.expand(
-                      key: ValueKey('off-$isMobile'),
-                      child: Image.asset(
-                        offImage,
-                        fit: BoxFit.cover,
-                      ),
-                    );
-            },
-          ),
+      background: AnimatedSwitcher(
+        duration: _switchDuration,
+        switchInCurve: Curves.easeInOut,
+        switchOutCurve: Curves.easeInOut,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isMobile = constraints.maxWidth < 900;
+            final offImage = isMobile
+                ? 'assets/images/background_ambiente_mobile/background_ambiente01.png'
+                : 'assets/images/background_ambiente_web/background_ambiente01.png';
+            final onImage = isMobile
+                ? 'assets/images/background_ambiente_mobile/background_ambiente02.png'
+                : 'assets/images/background_ambiente_web/background_ambiente02.png';
+            return _isLit
+                ? _LightImage(
+                    key: ValueKey('lit-$isMobile'),
+                    imagePath: onImage,
+                    flash: _flashController,
+                  )
+                : SizedBox.expand(
+                    key: ValueKey('off-$isMobile'),
+                    child: Image.asset(
+                      offImage,
+                      fit: BoxFit.cover,
+                    ),
+                  );
+          },
         ),
       ),
       body: Center(

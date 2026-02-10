@@ -25,7 +25,7 @@ func CORSMiddleware() gin.HandlerFunc {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE, PATCH")
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
@@ -117,6 +117,33 @@ func main() {
 		c.JSON(200, projects)
 	})
 
+	// Rota pública para capturar leads das landing pages
+	r.POST("/leads", func(c *gin.Context) {
+		var input struct {
+			Name    string `json:"name"`
+			Email   string `json:"email"`
+			Phone   string `json:"phone"`
+			Source  string `json:"source"`
+			Message string `json:"message"`
+		}
+		if err := c.ShouldBindJSON(&input); err != nil {
+			c.JSON(400, gin.H{"error": "Dados inválidos"})
+			return
+		}
+		lead := models.Lead{
+			Name:    input.Name,
+			Email:   input.Email,
+			Phone:   input.Phone,
+			Source:  input.Source,
+			Message: input.Message,
+		}
+		if err := DB.Create(&lead).Error; err != nil {
+			c.JSON(500, gin.H{"error": "Erro ao salvar lead"})
+			return
+		}
+		c.JSON(201, lead)
+	})
+
 	admin := r.Group("/admin")
 	admin.Use(AuthMiddleware())
 	{
@@ -180,6 +207,29 @@ func main() {
 		admin.DELETE("/users/:id", func(c *gin.Context) {
 			DB.Delete(&models.User{}, c.Param("id"))
 			c.JSON(200, gin.H{"status": "deleted"})
+		})
+
+		admin.GET("/leads", func(c *gin.Context) {
+			var leads []models.Lead
+			DB.Order("created_at desc").Find(&leads)
+			c.JSON(200, leads)
+		})
+
+		admin.PATCH("/leads/:id/status", func(c *gin.Context) {
+			var input struct {
+				Status string `json:"status"`
+			}
+			if err := c.ShouldBindJSON(&input); err != nil || input.Status == "" {
+				c.JSON(400, gin.H{"error": "Status inválido"})
+				return
+			}
+			if err := DB.Model(&models.Lead{}).
+				Where("id = ?", c.Param("id")).
+				Update("status", input.Status).Error; err != nil {
+				c.JSON(500, gin.H{"error": "Erro ao atualizar lead"})
+				return
+			}
+			c.JSON(200, gin.H{"status": "ok"})
 		})
 	}
 

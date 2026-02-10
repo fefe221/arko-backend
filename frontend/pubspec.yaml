@@ -31,14 +31,12 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
   dio: ^5.9.1
   shared_preferences: ^2.5.4
   # ... dio já deve estar aqui
   image_picker: ^1.0.7  # Para abrir a galeria do Windows/Web/Mobile
   http_parser: ^4.0.0   # Necessário para definir o tipo de arquivo no envio (Multipart)
+  flutter_masked_text2: ^0.9.1
 
 dev_dependencies:
   flutter_test:
@@ -68,6 +66,12 @@ flutter:
     - assets/images/logo.png
     - assets/images/background_ambiente_mobile/
     - assets/images/background_ambiente_web/
+    - assets/images/img_lps/
+    - assets/images/img_lps/lp01/
+    - assets/images/img_lps/lp02/
+    - assets/images/img_lps/lp03/
+    - assets/images/institucional.jpg
+    - assets/images/Fachada.jpg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

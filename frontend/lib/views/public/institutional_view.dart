@@ -12,7 +12,10 @@ class InstitutionalView extends StatelessWidget {
           Container(
             height: 320,
             decoration: BoxDecoration(
-              color: const Color(0xFFDCD7CC),
+              image: const DecorationImage(
+                image: AssetImage('assets/images/institucional.jpg'),
+                fit: BoxFit.cover,
+              ),
               borderRadius: BorderRadius.circular(24),
             ),
           ),

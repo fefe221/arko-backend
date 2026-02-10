@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/services/auth_service.dart';
+import 'package:frontend/widgets/orcamento_modal.dart';
 
 class PublicScaffold extends StatefulWidget {
   const PublicScaffold({
@@ -6,11 +8,15 @@ class PublicScaffold extends StatefulWidget {
     required this.body,
     this.showDivider = false,
     this.background,
+    this.applyContentPadding = true,
+    this.scrollHeader = false,
   });
 
   final Widget body;
   final bool showDivider;
   final Widget? background;
+  final bool applyContentPadding;
+  final bool scrollHeader;
 
   @override
   State<PublicScaffold> createState() => _PublicScaffoldState();
@@ -43,79 +49,109 @@ class _PublicScaffoldState extends State<PublicScaffold> {
     showDialog(
       context: context,
       barrierColor: Colors.black.withOpacity(0.35),
-      builder: (_) => const _OrcamentoModal(),
+      builder: (_) => const OrcamentoModal(),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    Widget header = SafeArea(
+      bottom: false,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isMobile = constraints.maxWidth < 900;
+          final horizontal = isMobile ? 20.0 : 150.0;
+          final logoHeight = isMobile ? 62.0 : 120.0;
+          final bottomPadding = isMobile ? 20.0 : 24.0;
+          final topPadding = isMobile ? 60.0 : 90.0;
+          return Padding(
+            padding:
+                EdgeInsets.fromLTRB(horizontal, topPadding, horizontal, bottomPadding),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.menu, color: _textPrimary),
+                  iconSize: 30,
+                  onPressed: _toggleMenu,
+                ),
+                const Spacer(),
+                InkWell(
+                  onTap: () => _navigateTo("/"),
+                  child: SizedBox(
+                    height: logoHeight,
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      height: logoHeight,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  tooltip: "Área administrativa",
+                  onPressed: () => _navigateTo("/login"),
+                  icon: const Icon(Icons.lock_outline, color: _textPrimary),
+                  iconSize: 28,
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
     return Scaffold(
       body: Stack(
         children: [
           if (widget.background != null)
             Positioned.fill(child: widget.background!),
-          Column(
-            children: [
-              SafeArea(
-                bottom: false,
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isMobile = constraints.maxWidth < 900;
-                    final horizontal = isMobile ? 20.0 : 150.0;
-                    final logoHeight = isMobile ? 62.0 : 120.0;
-                    final bottomPadding = isMobile ? 20.0 : 24.0;
-                    final topPadding = isMobile ? 60.0 : 90.0;
-                    return Padding(
-                      padding: EdgeInsets.fromLTRB(horizontal, topPadding, horizontal, bottomPadding),
-                      child: Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.menu, color: _textPrimary),
-                            iconSize: 30,
-                            onPressed: _toggleMenu,
-                          ),
-                          const Spacer(),
-                          InkWell(
-                            onTap: () => _navigateTo("/"),
-                            child: SizedBox(
-                              height: logoHeight,
-                              child: Image.asset(
-                                'assets/images/logo.png',
-                                height: logoHeight,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            tooltip: "Área administrativa",
-                            onPressed: () => _navigateTo("/login"),
-                            icon:
-                                const Icon(Icons.lock_outline, color: _textPrimary),
-                            iconSize: 28,
-                          ),
-                        ],
+          widget.scrollHeader
+              ? SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      header,
+                      if (widget.showDivider) const Divider(height: 1),
+                      if (!widget.applyContentPadding)
+                        widget.body
+                      else
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            final isMobile = constraints.maxWidth < 900;
+                            final horizontal = isMobile ? 20.0 : 150.0;
+                            final top = isMobile ? 60.0 : 80.0;
+                            return Padding(
+                              padding:
+                                  EdgeInsets.fromLTRB(horizontal, top, horizontal, 24),
+                              child: widget.body,
+                            );
+                          },
+                        ),
+                    ],
+                  ),
+                )
+              : Column(
+                  children: [
+                    header,
+                    if (widget.showDivider) const Divider(height: 1),
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          if (!widget.applyContentPadding) {
+                            return widget.body;
+                          }
+                          final isMobile = constraints.maxWidth < 900;
+                          final horizontal = isMobile ? 20.0 : 150.0;
+                          final top = isMobile ? 60.0 : 80.0;
+                          return Padding(
+                            padding:
+                                EdgeInsets.fromLTRB(horizontal, top, horizontal, 24),
+                            child: widget.body,
+                          );
+                        },
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
-              ),
-              if (widget.showDivider) const Divider(height: 1),
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isMobile = constraints.maxWidth < 900;
-                    final horizontal = isMobile ? 20.0 : 150.0;
-                    final top = isMobile ? 60.0 : 80.0;
-                    return Padding(
-                      padding: EdgeInsets.fromLTRB(horizontal, top, horizontal, 24),
-                      child: widget.body,
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
           if (_menuOpen)
             Positioned.fill(
               child: GestureDetector(
@@ -158,9 +194,20 @@ class _PublicScaffoldState extends State<PublicScaffold> {
                                 label: "02 / A Experiência Arkō",
                                 onTap: () => _navigateTo("/institucional"),
                               ),
-                              _MenuItem(
-                                label: "03 / Campanhas",
-                                onTap: () => _navigateTo("/campanhas"),
+                              FutureBuilder<String?>(
+                                future: AuthService.getToken(),
+                                builder: (context, snapshot) {
+                                  final hasToken = snapshot.hasData &&
+                                      snapshot.data != null &&
+                                      snapshot.data!.isNotEmpty;
+                                  if (!hasToken) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return _MenuItem(
+                                    label: "03 / Campanhas",
+                                    onTap: () => _navigateTo("/campanhas"),
+                                  );
+                                },
                               ),
                               _MenuItem(
                                 label: "04 / Ambientes",
@@ -219,102 +266,6 @@ class _MenuItem extends StatelessWidget {
           textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         ),
         child: Text(label),
-      ),
-    );
-  }
-}
-
-class _OrcamentoModal extends StatelessWidget {
-  const _OrcamentoModal();
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        constraints: const BoxConstraints(maxWidth: 420),
-        decoration: BoxDecoration(
-          color: const Color(0xFFE8E6DE),
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              "Como você prefere iniciar seu projeto?",
-              style: Theme.of(context).textTheme.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            OutlinedButton(
-              onPressed: () {},
-              child: const Text("whatsapp"),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              "Ideal para dúvidas rápidas\ne agendamento imediato.",
-              style: Theme.of(context).textTheme.bodySmall,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: const [
-                Expanded(child: Divider()),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
-                  child: Text("ou"),
-                ),
-                Expanded(child: Divider()),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              "Preencha o formulário e um dos nossos\nArquitetos irá entrar em contato.",
-              style: Theme.of(context).textTheme.bodySmall,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            const _Input(label: "Nome"),
-            const SizedBox(height: 10),
-            const _Input(label: "Telefone"),
-            const SizedBox(height: 10),
-            const _Input(label: "E-mail"),
-            const SizedBox(height: 10),
-            const _Input(label: "Qual ambiente pretende planejar?"),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {},
-                child: const Text("Enviar"),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Input extends StatelessWidget {
-  const _Input({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      decoration: InputDecoration(
-        hintText: label,
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
     );
   }

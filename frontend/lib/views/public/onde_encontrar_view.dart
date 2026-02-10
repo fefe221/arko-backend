@@ -17,10 +17,12 @@ class OndeEncontrarView extends StatelessWidget {
           Container(
             height: 240,
             decoration: BoxDecoration(
-              color: const Color(0xFFDCD7CC),
+              image: const DecorationImage(
+                image: AssetImage('assets/images/Fachada.jpg'),
+                fit: BoxFit.cover,
+              ),
               borderRadius: BorderRadius.circular(18),
             ),
-            child: const Center(child: Text("Imagem da loja")),
           ),
           const SizedBox(height: 16),
           Container(
@@ -36,11 +38,11 @@ class OndeEncontrarView extends StatelessWidget {
                 SizedBox(height: 4),
                 Text("Ambientes planejados"),
                 SizedBox(height: 12),
-                Text("Rua Jabuticaba, 124"),
+                Text("Rua Georgetown, 60"),
                 Text("Londrina / PR"),
                 SizedBox(height: 12),
                 Text("Seg-sex, 9h às 19h | Sáb, 8h às 12h"),
-                Text("tel.: 43 3098 0987"),
+                Text("tel.: 43 99146-6424"),
               ],
             ),
           ),

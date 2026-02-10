@@ -3,6 +3,7 @@ import 'package:frontend/services/auth_service.dart';
 import 'package:frontend/views/login_view.dart';
 import 'package:frontend/views/users_management_view.dart';
 import 'package:frontend/views/project_management_view.dart';
+import 'package:frontend/views/leads_management_view.dart';
 
 
 class DashboardView extends StatefulWidget {
@@ -19,7 +20,7 @@ class _DashboardViewState extends State<DashboardView> {
     const Center(child: Text("Bem-vindo ao Painel Arkō", style: TextStyle(fontSize: 24))),
     const ProjectsManagementView(), // Esta é a classe que o compilador precisa encontrar
     const UsersManagementView(),
-    const Center(child: Text("Módulo de Leads - Em breve")),
+    const LeadsManagementView(),
   ];
 
   void _handleLogout() async {
