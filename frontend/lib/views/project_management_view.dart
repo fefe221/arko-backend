@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:frontend/services/project_service.dart';
+import 'package:frontend/services/api_client.dart';
 
 class ProjectsManagementView extends StatefulWidget {
   const ProjectsManagementView({super.key});
@@ -19,7 +20,8 @@ class _ProjectsManagementViewState extends State<ProjectsManagementView> {
   final _locController = TextEditingController();
   final _catController = TextEditingController();
   List<XFile> _selectedImages = [];
-  static const String _baseUrl = 'http://localhost:8080';
+  static String _baseUrl() => ApiClient.resolveBaseUrl();
+  bool _isUploading = false;
   static const List<String> _categories = [
     "Cozinha",
     "Dormitório",
@@ -59,9 +61,12 @@ class _ProjectsManagementViewState extends State<ProjectsManagementView> {
     showDialog(
       context: rootContext,
       useRootNavigator: true,
+      barrierDismissible: false,
       builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => AlertDialog(
-          title: const Text("Novo Projeto"),
+        builder: (context, setModalState) => WillPopScope(
+          onWillPop: () async => !_isUploading,
+          child: AlertDialog(
+            title: const Text("Novo Projeto"),
           content: SizedBox(
             width: 500,
             child: SingleChildScrollView(
@@ -98,20 +103,26 @@ class _ProjectsManagementViewState extends State<ProjectsManagementView> {
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton.icon(
-                    onPressed: () => _pickImages(setModalState),
+                    onPressed: _isUploading ? null : () => _pickImages(setModalState),
                     icon: const Icon(Icons.image),
                     label: Text(_selectedImages.isEmpty
                         ? "Selecionar Imagens"
                         : "${_selectedImages.length} Selecionadas"),
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[200]),
                   ),
+                  if (_isUploading) ...[
+                    const SizedBox(height: 16),
+                    const LinearProgressIndicator(),
+                  ],
                 ],
               ),
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () {
+              onPressed: _isUploading
+                  ? null
+                  : () {
                 _selectedImages = [];
                 Navigator.pop(context);
               },
@@ -126,6 +137,7 @@ class _ProjectsManagementViewState extends State<ProjectsManagementView> {
                   );
                   return;
                 }
+                setModalState(() => _isUploading = true);
                 try {
                   await _service.createProject(
                     title: _titleController.text,
@@ -150,11 +162,25 @@ class _ProjectsManagementViewState extends State<ProjectsManagementView> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("Erro ao salvar projeto")),
                   );
+                } finally {
+                  if (context.mounted) {
+                    setModalState(() => _isUploading = false);
+                  }
                 }
               },
-              child: const Text("SALVAR", style: TextStyle(color: Colors.white)),
+              child: _isUploading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text("SALVAR", style: TextStyle(color: Colors.white)),
             ),
           ],
+          ),
         ),
       ),
     );
@@ -203,7 +229,7 @@ class _ProjectsManagementViewState extends State<ProjectsManagementView> {
       final url = first is Map ? first['url']?.toString() : null;
       if (url == null || url.isEmpty) return null;
       if (url.startsWith('http://') || url.startsWith('https://')) return url;
-      return '$_baseUrl$url';
+      return '${_baseUrl()}$url';
     }
     return null;
   }

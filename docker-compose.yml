@@ -23,7 +23,7 @@ services:
     volumes:
       - ./backend:/app
       # Garantimos que a pasta de uploads no container seja a mesma da sua máquina
-      - ./backend/uploads:/app/uploads 
+      - ./backend/uploads:/root/uploads 
     depends_on:
       - db
     environment:
@@ -32,6 +32,21 @@ services:
       DB_USER: admin
       DB_PASSWORD: password123
       DB_NAME: arko_db
+      MONDAY_API_TOKEN: ${MONDAY_API_TOKEN}
+      MONDAY_BOARD_ID: ${MONDAY_BOARD_ID}
+      UPLOAD_DIR: /root/uploads
+    # Para produção, é recomendado remover o mapeamento de porta acima
+    # e deixar apenas o reverse proxy falar com o backend.
+
+  # Frontend (Flutter Web + Nginx)
+  frontend:
+    build: ./frontend
+    container_name: arko_frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "8081:80"
 
 volumes:
   postgres_data:

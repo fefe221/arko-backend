@@ -1,16 +1,18 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:frontend/services/auth_service.dart';
 
 class ApiClient {
   // Configuração base com timeout para não ficar travado
-  final Dio dio = Dio(BaseOptions(
-    baseUrl: 'http://localhost:8080',
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 10),
-  ));
+  late final Dio dio;
 
-
-ApiClient() {
+  ApiClient() {
+    final baseUrl = resolveBaseUrl();
+    dio = Dio(BaseOptions(
+      baseUrl: baseUrl,
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
+    ));
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
@@ -33,5 +35,22 @@ ApiClient() {
         },
       ),
     );
+  }
+
+  static String resolveBaseUrl() {
+    if (!kIsWeb) {
+      return 'http://localhost:8080';
+    }
+    // Em produção (release), força o domínio atual
+    if (kReleaseMode) {
+      return Uri.base.origin;
+    }
+    // Em dev web, permite backend local
+    final origin = Uri.base.origin;
+    final host = Uri.base.host;
+    if (host == 'localhost' || host == '127.0.0.1') {
+      return 'http://localhost:8080';
+    }
+    return origin;
   }
 }

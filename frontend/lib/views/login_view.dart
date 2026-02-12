@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:frontend/services/api_client.dart';
 // Importamos o serviço que criamos para salvar o token
 import 'package:frontend/services/auth_service.dart';
 import 'package:frontend/views/dashboard_view.dart';
@@ -14,12 +15,12 @@ class LoginView extends StatefulWidget {
 class _LoginViewState extends State<LoginView> {
   final _userController = TextEditingController();
   final _passController = TextEditingController();
-  final _dio = Dio();
+  final _api = ApiClient();
 
   Future<void> _fazerLogin() async {
     try {
       // 1. Enviamos a requisição ao Backend Go
-      final response = await _dio.post('http://localhost:8080/login', data: {
+      final response = await _api.dio.post('/login', data: {
         'username': _userController.text,
         'password': _passController.text,
       });

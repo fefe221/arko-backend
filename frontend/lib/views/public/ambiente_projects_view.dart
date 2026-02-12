@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/services/project_service.dart';
+import 'package:frontend/services/api_client.dart';
 
 class AmbienteProjectsView extends StatelessWidget {
   const AmbienteProjectsView({
@@ -8,7 +9,7 @@ class AmbienteProjectsView extends StatelessWidget {
   });
 
   final String category;
-  static const String _baseUrl = 'http://localhost:8080';
+  static String _baseUrl() => ApiClient.resolveBaseUrl();
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +169,7 @@ class AmbienteProjectsView extends StatelessWidget {
       final url = first is Map ? first['url']?.toString() : null;
       if (url == null || url.isEmpty) return null;
       if (url.startsWith('http://') || url.startsWith('https://')) return url;
-      return '$_baseUrl$url';
+      return '${_baseUrl()}$url';
     }
     return null;
   }
@@ -184,7 +185,7 @@ class ProjectGalleryView extends StatefulWidget {
 }
 
 class _ProjectGalleryViewState extends State<ProjectGalleryView> {
-  static const String _baseUrl = 'http://localhost:8080';
+  static String _baseUrl() => ApiClient.resolveBaseUrl();
   int _selectedIndex = 0;
 
   @override
@@ -313,7 +314,7 @@ class _ProjectGalleryViewState extends State<ProjectGalleryView> {
       final url = image['url']?.toString();
       if (url == null || url.isEmpty) return null;
       if (url.startsWith('http://') || url.startsWith('https://')) return url;
-      return '$_baseUrl$url';
+      return '${_baseUrl()}$url';
     }
     return null;
   }

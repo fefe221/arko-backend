@@ -1,12 +1,17 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
+	"unicode"
 
 	"github.com/fefe221/arko-backend/models"
 	"github.com/gin-gonic/gin"
@@ -83,7 +88,10 @@ func main() {
 	r := gin.Default()
 	r.Use(CORSMiddleware())
 
-	uploadDir := "./uploads"
+	uploadDir := os.Getenv("UPLOAD_DIR")
+	if uploadDir == "" {
+		uploadDir = "./uploads"
+	}
 	os.MkdirAll(uploadDir, 0755)
 	r.Static("/uploads", uploadDir)
 
@@ -141,6 +149,7 @@ func main() {
 			c.JSON(500, gin.H{"error": "Erro ao salvar lead"})
 			return
 		}
+		go sendLeadToMonday(lead)
 		c.JSON(201, lead)
 	})
 
@@ -166,7 +175,11 @@ func main() {
 			files := form.File["images"]
 			for _, file := range files {
 				name := uuid.New().String() + filepath.Ext(file.Filename)
-				c.SaveUploadedFile(file, filepath.Join(uploadDir, name))
+				if err := c.SaveUploadedFile(file, filepath.Join(uploadDir, name)); err != nil {
+					log.Println("Erro ao salvar upload:", err)
+					c.JSON(500, gin.H{"error": "Erro ao salvar o upload"})
+					return
+				}
 				DB.Create(&models.Image{ProjectID: p.ID, URL: "/uploads/" + name})
 			}
 			c.JSON(201, p)
@@ -234,4 +247,158 @@ func main() {
 	}
 
 	r.Run(":8080")
+}
+
+func sendLeadToMonday(lead models.Lead) {
+	token := os.Getenv("MONDAY_API_TOKEN")
+	boardID := os.Getenv("MONDAY_BOARD_ID")
+	if token == "" || boardID == "" {
+		log.Println("MONDAY_API_TOKEN ou MONDAY_BOARD_ID não configurado")
+		return
+	}
+
+	columnValues := map[string]interface{}{
+		"data": map[string]string{
+			"date": lead.CreatedAt.Format("2006-01-02"),
+		},
+	}
+	if phone := normalizePhone(lead.Phone); phone != "" {
+		columnValues["telefone"] = map[string]string{
+			"phone":            phone,
+			"countryShortName": "BR",
+		}
+	}
+	if procedencia := mapProcedenciaLabel(lead.Source); procedencia != "" {
+		columnValues["lista_suspensa"] = map[string]interface{}{
+			"labels": []string{procedencia},
+		}
+	}
+
+	statusLabel := strings.TrimSpace(os.Getenv("MONDAY_STATUS_LABEL"))
+	if statusLabel != "" {
+		columnValues["status"] = map[string]string{
+			"label": statusLabel,
+		}
+	}
+
+	if lead.Message != "" {
+		columnValues["text_mkywsm6b"] = lead.Message
+	}
+
+	columnValuesJSON, err := json.Marshal(columnValues)
+	if err != nil {
+		log.Println("Erro ao gerar column_values:", err)
+		return
+	}
+
+	query := `mutation ($boardId: ID!, $itemName: String!, $columnValues: JSON!) {
+		create_item(board_id: $boardId, item_name: $itemName, column_values: $columnValues) { id }
+	}`
+
+	payload := map[string]interface{}{
+		"query": query,
+		"variables": map[string]interface{}{
+			"boardId":      boardID,
+			"itemName":     lead.Name,
+			"columnValues": string(columnValuesJSON),
+		},
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		log.Println("Erro ao montar payload:", err)
+		return
+	}
+
+	req, err := http.NewRequest("POST", "https://api.monday.com/v2", bytes.NewBuffer(body))
+	if err != nil {
+		log.Println("Erro ao criar request:", err)
+		return
+	}
+	req.Header.Set("Authorization", token)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println("Erro ao enviar lead para Monday:", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode >= 300 {
+		log.Println("Monday respondeu com status:", resp.StatusCode, "body:", string(bodyBytes))
+		return
+	}
+
+	var result struct {
+		Data struct {
+			CreateItem struct {
+				ID string `json:"id"`
+			} `json:"create_item"`
+		} `json:"data"`
+		Errors []struct {
+			Message string `json:"message"`
+		} `json:"errors"`
+	}
+	if err := json.Unmarshal(bodyBytes, &result); err != nil {
+		log.Println("Monday resposta inválida:", err, "body:", string(bodyBytes))
+		return
+	}
+	if len(result.Errors) > 0 {
+		log.Println("Monday erros:", result.Errors, "body:", string(bodyBytes))
+		return
+	}
+	if result.Data.CreateItem.ID == "" {
+		log.Println("Monday sem create_item id:", string(bodyBytes))
+		return
+	}
+	log.Println("Monday item criado:", result.Data.CreateItem.ID)
+}
+
+func normalizeStatusLabel(status string) string {
+	if status == "" {
+		return ""
+	}
+	s := strings.TrimSpace(status)
+	if strings.EqualFold(s, "novo") {
+		return "Novo Lead"
+	}
+	return s
+}
+
+func normalizePhone(phone string) string {
+	if phone == "" {
+		return ""
+	}
+	var b strings.Builder
+	for _, r := range phone {
+		if unicode.IsDigit(r) {
+			b.WriteRune(r)
+		}
+	}
+	digits := b.String()
+	if strings.HasPrefix(digits, "55") && len(digits) > 11 {
+		digits = digits[2:]
+	}
+	if len(digits) < 10 {
+		return ""
+	}
+	return digits
+}
+
+func mapProcedenciaLabel(source string) string {
+	switch strings.ToLower(strings.TrimSpace(source)) {
+	case "orcamento":
+		return "Site_Orçamento"
+	case "lp01":
+		return "Site_LP01"
+	case "lp02":
+		return "Site_LP02"
+	case "lp03":
+		return "Site_LP03"
+	default:
+		return ""
+	}
 }
